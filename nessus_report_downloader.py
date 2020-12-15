@@ -219,39 +219,45 @@ def downloadNessusReport(base_url, token, scan_id_list, json_user_data):
         resp = sendPostRequest(url, json_data=json_user_data,headers=token_header)
         file_token = json.loads(resp.text)
 
+        # If scan is running, it will throw error. Check for error.
+        if "error" in file_token:
+            printMessage("ERROR: " + str(file_token["error"]), 0)
+            exit(-1)
+        else:
+
         # Check if file is ready for download
-        url = base_url + "/scans/{0}/export/{1}/status".format(str(scan_id),str(file_token["file"]))
-        resp2 = sendGetRequest(url,headers=token_header)
-        while json.loads(resp2.text)["status"] == "loading":
-            printMessage("Report is not ready yet, waiting for {0} seconds".format(SLEEP_TIME),0)
-            time.sleep(SLEEP_TIME)
-            resp2 = sendGetRequest(url, headers=token_header)
+            url = base_url + "/scans/{0}/export/{1}/status".format(str(scan_id),str(file_token["file"]))
+            resp2 = sendGetRequest(url,headers=token_header)
+            while json.loads(resp2.text)["status"] == "loading":
+                printMessage("Report is not ready yet, waiting for {0} seconds".format(SLEEP_TIME),0)
+                time.sleep(SLEEP_TIME)
+                resp2 = sendGetRequest(url, headers=token_header)
 
-        # If nessus report is ready for download, then write the response in external file
-        url= base_url + "/tokens/{0}/download".format(str(file_token["token"]))
-        if json.loads(resp2.text)["status"] == "ready":
-            printMessage("Download link is available now", 1)
-            resp3 = sendGetRequest(url,headers=token_header)
+            # If nessus report is ready for download, then write the response in external file
+            url= base_url + "/tokens/{0}/download".format(str(file_token["token"]))
+            if json.loads(resp2.text)["status"] == "ready":
+                printMessage("Download link is available now", 1)
+                resp3 = sendGetRequest(url,headers=token_header)
 
-            if checkStatus(resp3, "Started downloading the nessus report",
-                           "Unable to download scan: " + str(scan_id)):
-                filename = resp3.headers["Content-Disposition"].split('"')[1]
-                try:
-                    nessus_file = open(filename, "w")
-                    nessus_file.write(resp3.text)
-                    nessus_file.close()
-                    printMessage("Report was saved in " + filename, 1)
-                    printMessage("\n", 99)
-                except IOError:
-                    printMessage("Error occurred while writing to file : " + filename, 0)
-                except UnicodeEncodeError:
-                    # Append the chapter type in file name
-                    filename2=filename.split(".")[0]+'_'+json_user_data["chapters"]+'.'+filename.split(".")[-1]
-                    nessus_file = open(filename2, "wb")
-                    nessus_file.write(resp3.content)
-                    nessus_file.close()
-                    printMessage("Report was saved in " + filename2, 1)
-                    printMessage("\n", 99)
+                if checkStatus(resp3, "Started downloading the nessus report",
+                               "Unable to download scan: " + str(scan_id)):
+                    filename = resp3.headers["Content-Disposition"].split('"')[1]
+                    try:
+                        nessus_file = open(filename, "w")
+                        nessus_file.write(resp3.text)
+                        nessus_file.close()
+                        printMessage("Report was saved in " + filename, 1)
+                        printMessage("\n", 99)
+                    except IOError:
+                        printMessage("Error occurred while writing to file : " + filename, 0)
+                    except UnicodeEncodeError:
+                        # Append the chapter type in file name
+                        filename2=filename.split(".")[0]+'_'+json_user_data["chapters"]+'.'+filename.split(".")[-1]
+                        nessus_file = open(filename2, "wb")
+                        nessus_file.write(resp3.content)
+                        nessus_file.close()
+                        printMessage("Report was saved in " + filename2, 1)
+                        printMessage("\n", 99)
 
 
 def main():
