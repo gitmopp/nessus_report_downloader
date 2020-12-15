@@ -4,8 +4,8 @@
 # Name: Nessus Report downloader
 # Author: Nikhil Raj ( nikhilraj149@gmail.com )
 #
-# Version: 1.1
-# Last Updated: 24 Nov 2020
+# Version: 1.3
+# Last Updated: 15 Dec 2020
 #
 # Description:  A python script for automating the download of nessus reports in multiple formats.
 #
@@ -69,14 +69,24 @@ def sendDeleteRequest(url, json_data={}, headers={}):
 
 # Print message on stdout
 def printMessage(msg, flag=1):
-    if flag == 1:
-        print("[+] " + msg)
-    elif flag == 0:
-        print("[-] " + msg)
-    elif flag == 2:
-        print("[*] " + msg)
+    if timestamp:
+        if flag == 1:
+            print(str(datetime.now()) + " [+] " + msg)
+        elif flag == 0:
+            print(str(datetime.now()) + " [-] " + msg)
+        elif flag == 2:
+            print(str(datetime.now()) + " [*] " + msg)
+        else:
+            print(msg)
     else:
-        print(msg)
+        if flag == 1:
+            print("[+] " + msg)
+        elif flag == 0:
+            print("[-] " + msg)
+        elif flag == 2:
+            print("[*] " + msg)
+        else:
+            print(msg)
 
 
 # Check response code for an HTTP Response and print req message
@@ -219,39 +229,45 @@ def downloadNessusReport(base_url, token, scan_id_list, json_user_data):
         resp = sendPostRequest(url, json_data=json_user_data,headers=token_header)
         file_token = json.loads(resp.text)
 
+        # If scan is running, it will throw error. Check for error.
+        if "error" in file_token:
+            printMessage("ERROR: " + str(file_token["error"]), 0)
+            exit(-1)
+        else:
+
         # Check if file is ready for download
-        url = base_url + "/scans/{0}/export/{1}/status".format(str(scan_id),str(file_token["file"]))
-        resp2 = sendGetRequest(url,headers=token_header)
-        while json.loads(resp2.text)["status"] == "loading":
-            printMessage("Report is not ready yet, waiting for {0} seconds".format(SLEEP_TIME),0)
-            time.sleep(SLEEP_TIME)
-            resp2 = sendGetRequest(url, headers=token_header)
+            url = base_url + "/scans/{0}/export/{1}/status".format(str(scan_id),str(file_token["file"]))
+            resp2 = sendGetRequest(url,headers=token_header)
+            while json.loads(resp2.text)["status"] == "loading":
+                printMessage("Report is not ready yet, waiting for {0} seconds".format(SLEEP_TIME),0)
+                time.sleep(SLEEP_TIME)
+                resp2 = sendGetRequest(url, headers=token_header)
 
-        # If nessus report is ready for download, then write the response in external file
-        url= base_url + "/tokens/{0}/download".format(str(file_token["token"]))
-        if json.loads(resp2.text)["status"] == "ready":
-            printMessage("Download link is available now", 1)
-            resp3 = sendGetRequest(url,headers=token_header)
+            # If nessus report is ready for download, then write the response in external file
+            url= base_url + "/tokens/{0}/download".format(str(file_token["token"]))
+            if json.loads(resp2.text)["status"] == "ready":
+                printMessage("Download link is available now", 1)
+                resp3 = sendGetRequest(url,headers=token_header)
 
-            if checkStatus(resp3, "Started downloading the nessus report",
-                           "Unable to download scan: " + str(scan_id)):
-                filename = resp3.headers["Content-Disposition"].split('"')[1]
-                try:
-                    nessus_file = open(filename, "w")
-                    nessus_file.write(resp3.text)
-                    nessus_file.close()
-                    printMessage("Report was saved in " + filename, 1)
-                    printMessage("\n", 99)
-                except IOError:
-                    printMessage("Error occurred while writing to file : " + filename, 0)
-                except UnicodeEncodeError:
-                    # Append the chapter type in file name
-                    filename2=filename.split(".")[0]+'_'+json_user_data["chapters"]+'.'+filename.split(".")[-1]
-                    nessus_file = open(filename2, "wb")
-                    nessus_file.write(resp3.content)
-                    nessus_file.close()
-                    printMessage("Report was saved in " + filename2, 1)
-                    printMessage("\n", 99)
+                if checkStatus(resp3, "Started downloading the nessus report",
+                               "Unable to download scan: " + str(scan_id)):
+                    filename = resp3.headers["Content-Disposition"].split('"')[1]
+                    try:
+                        nessus_file = open(filename, "w")
+                        nessus_file.write(resp3.text)
+                        nessus_file.close()
+                        printMessage("Report was saved in " + filename, 1)
+                        printMessage("\n", 99)
+                    except IOError:
+                        printMessage("Error occurred while writing to file : " + filename, 0)
+                    except UnicodeEncodeError:
+                        # Append the chapter type in file name
+                        filename2=filename.split(".")[0]+'_'+json_user_data["chapters"]+'.'+filename.split(".")[-1]
+                        nessus_file = open(filename2, "wb")
+                        nessus_file.write(resp3.content)
+                        nessus_file.close()
+                        printMessage("Report was saved in " + filename2, 1)
+                        printMessage("\n", 99)
 
 
 def main():
@@ -269,6 +285,7 @@ def main():
     parser.add_argument("-c", "--chapter", help="use comma separated list of chapters; [0]-vuln_hosts_summary, [1]-vuln_by_host (Default), "
                                                 "[2]-vuln_by_plugin, [3]-compliance_exec, [4]-compliance, [5]-remediations",default="1")
     parser.add_argument("--db-pass", help="password for encrypting nessus-db file(s), if none specified use 'nessus'",default="nessus")
+    parser.add_argument("-t", "--timestamp", help="enable timestamp prefix on script output", action="store_true")
     args = parser.parse_args()
 
     # Nessus server url
@@ -284,7 +301,9 @@ def main():
     # Login credentials
     creds = {'username': args.user, 'password': args.passwd}
 
-
+    global timestamp
+    timestamp = args.timestamp
+    
     # Checking connection to nessus server
     resp = sendGetRequest(base_url, "")
     if checkStatus(resp, "Connected to nessus server", "Unable to connect to server at " + str(ip)):
