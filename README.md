@@ -5,9 +5,9 @@
 
  **Original Author** : **Nikhil Raj ( nikhilraj149@gmail.com )**
  
- **Contributors**    : novaksam (Nessus 8 compatibility), gitmopp (Python3 version), atluxity (Error handling)
+ **Contributors**    : novaksam (Nessus 8 compatibility), gitmopp (Python3 version), atluxity (Error handling, timestamps)
 
- **Version: 1.2**
+ **Version: 1.3**
  
  **Last Updated** : 15 Dec 2020
 
@@ -22,11 +22,10 @@
     $ python nessus_report_downloader.py -h 
     
     Output:
-    
-        usage: python nessus_report_downloader.py -i <127.0.0.1> -u <nessus_user> -p <nessus_pass> [OPTIONS]... 
-    
+        usage: python nessus_report_downloader.py -i <127.0.0.1> -u <nessus_user> -p <nessus_pass> [OPTIONS]...
+
         A python script for automating the report download from nessus server
-        
+
         optional arguments:
           -h, --help            show this help message and exit
           -i SERVER, --server SERVER
@@ -48,7 +47,8 @@
                                 [4]-compliance, [5]-remediations
           --db-pass DB_PASS     password for encrypting nessus-db file(s), if none
                                 specified use 'nessus'
-        
+          -t, --timestamp       enable timestamp prefix on script output
+
         Report bugs at nikhilraj149@gmail.com
     
  2) Display nessus scan summary table having scan_id, name and folder_id
