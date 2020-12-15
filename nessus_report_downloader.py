@@ -4,8 +4,8 @@
 # Name: Nessus Report downloader
 # Author: Nikhil Raj ( nikhilraj149@gmail.com )
 #
-# Version: 1.2
-# Last Updated: 24 Nov 2020
+# Version: 1.3
+# Last Updated: 15 Dec 2020
 #
 # Description:  A python script for automating the download of nessus reports in multiple formats.
 #
@@ -69,14 +69,24 @@ def sendDeleteRequest(url, json_data={}, headers={}):
 
 # Print message on stdout
 def printMessage(msg, flag=1):
-    if flag == 1:
-        print("[+] " + msg)
-    elif flag == 0:
-        print("[-] " + msg)
-    elif flag == 2:
-        print("[*] " + msg)
+    if timestamp:
+        if flag == 1:
+            print(str(datetime.now()) + " [+] " + msg)
+        elif flag == 0:
+            print(str(datetime.now()) + " [-] " + msg)
+        elif flag == 2:
+            print(str(datetime.now()) + " [*] " + msg)
+        else:
+            print(msg)
     else:
-        print(msg)
+        if flag == 1:
+            print("[+] " + msg)
+        elif flag == 0:
+            print("[-] " + msg)
+        elif flag == 2:
+            print("[*] " + msg)
+        else:
+            print(msg)
 
 
 # Check response code for an HTTP Response and print req message
@@ -275,6 +285,7 @@ def main():
     parser.add_argument("-c", "--chapter", help="use comma separated list of chapters; [0]-vuln_hosts_summary, [1]-vuln_by_host (Default), "
                                                 "[2]-vuln_by_plugin, [3]-compliance_exec, [4]-compliance, [5]-remediations",default="1")
     parser.add_argument("--db-pass", help="password for encrypting nessus-db file(s), if none specified use 'nessus'",default="nessus")
+    parser.add_argument("-t", "--timestamp", help="enable timestamp prefix on script output", action="store_true")
     args = parser.parse_args()
 
     # Nessus server url
@@ -290,7 +301,9 @@ def main():
     # Login credentials
     creds = {'username': args.user, 'password': args.passwd}
 
-
+    global timestamp
+    timestamp = args.timestamp
+    
     # Checking connection to nessus server
     resp = sendGetRequest(base_url, "")
     if checkStatus(resp, "Connected to nessus server", "Unable to connect to server at " + str(ip)):
