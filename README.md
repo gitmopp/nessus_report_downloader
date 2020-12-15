@@ -3,11 +3,12 @@
 
  **Name** : **Nessus Report downloader**
 
- **Author** : **Nikhil Raj ( nikhilraj149@gmail.com )**
+ **Original Author** : **Nikhil Raj ( nikhilraj149@gmail.com )**
+ **Contributors**    : novaksam (Nessus 8 compatibility), gitmopp (Python3 version)
 
- **Version: 1.0**
+ **Version: 1.1**
  
- **Last Updated** : 13 Aug 2017
+ **Last Updated** : 24 Nov 2020
 
  **Description**:  
  
