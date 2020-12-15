@@ -5,9 +5,9 @@
 
  **Original Author** : **Nikhil Raj ( nikhilraj149@gmail.com )**
  
- **Contributors**    : novaksam (Nessus 8 compatibility), gitmopp (Python3 version)
+ **Contributors**    : novaksam (Nessus 8 compatibility), gitmopp (Python3 version), atluxity (Error handling)
 
- **Version: 1.1**
+ **Version: 1.2**
  
  **Last Updated** : 24 Nov 2020
 
